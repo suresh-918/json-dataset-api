@@ -17,7 +17,7 @@ A Spring Boot REST API that stores JSON dataset records in a MySQL relational da
 
 - **Language:** Java 17
 - **Framework:** Spring Boot 3.5.6
-- **Database:** MySQL 8
+- **Database:** MySQL 8 or compatible
 - **Persistence:** Spring Data JPA, Hibernate
 - **JSON Processing:** Jackson
 - **API Documentation:** Springdoc OpenAPI / Swagger UI
@@ -26,73 +26,83 @@ A Spring Boot REST API that stores JSON dataset records in a MySQL relational da
 
 ## Prerequisites
 
-Ensure the following are installed:
+Ensure the following are installed or available:
 
 - Java 17 or later
-- MySQL Server 8 or compatible
+- A MySQL database (local or hosted)
 - Maven, or use the included Maven Wrapper
 
 ## Database Setup
 
-Create the database in MySQL:
+Create a database in MySQL if it does not already exist:
 
 ```sql
-CREATE DATABASE freightfox_db;
+CREATE DATABASE freightfoxdb;
 ```
 
 The application uses Hibernate schema generation with `spring.jpa.hibernate.ddl-auto=update`.
 
-Configure the database credentials using environment variables:
+### Environment Variables
+
+Configure the following environment variables before starting the application:
 
 | Variable | Description |
 |---|---|
-| `DB_USERNAME` | MySQL username; defaults to `root` |
+| `DB_URL` | Complete JDBC URL for the MySQL database |
+| `DB_USERNAME` | MySQL username |
 | `DB_PASSWORD` | MySQL password |
 
-The application connects to:
+For a local MySQL installation, the JDBC URL can be:
 
 ```text
-jdbc:mysql://localhost:3306/freightfox_db
+jdbc:mysql://localhost:3306/freightfoxdb
 ```
 
-Configure the environment variables in your IDE or terminal before starting the application. Do not commit database passwords or other secrets to Git.
+For a hosted database such as Aiven, use the JDBC URL and connection details provided by your database provider. Ensure SSL is configured as required by the provider.
+
+**Security:** Never commit database passwords or other secrets to GitHub.
 
 ## Configuration
 
-The main configuration is in `src/main/resources/application.properties`.
+The main configuration file is `src/main/resources/application.properties`.
 
 ```properties
 spring.application.name=json-dataset-api
 
-spring.datasource.url=jdbc:mysql://localhost:3306/freightfox_db
-spring.datasource.username=${DB_USERNAME:root}
+spring.datasource.url=${DB_URL}
+spring.datasource.username=${DB_USERNAME}
 spring.datasource.password=${DB_PASSWORD}
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 
 spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+spring.jpa.show-sql=false
 
 springdoc.swagger-ui.path=/swagger-ui.html
 ```
 
+The database connection details are supplied through environment variables rather than being hardcoded in the configuration file.
+
 ## Running the Application
 
-Clone the repository and navigate to the project directory.
+Clone the repository and navigate to the project directory:
 
 ```bash
 git clone https://github.com/suresh-918/json-dataset-api.git
 cd json-dataset-api
 ```
 
-Set the database environment variables, then run the application.
+Configure `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` in your IDE or terminal.
 
-**Windows:**
+### Windows
 
 ```bat
-set DB_USERNAME=root
+set DB_URL=jdbc:mysql://localhost:3306/freightfoxdb
+set DB_USERNAME=your_mysql_username
 set DB_PASSWORD=your_mysql_password
 mvnw.cmd spring-boot:run
 ```
+
+Replace the example values with your actual database connection details. For a hosted database, use its JDBC URL instead of the localhost URL.
 
 Alternatively, run `JsonDatasetApiApplication` from your IDE after configuring the environment variables.
 
@@ -116,6 +126,8 @@ Inserts a JSON object into the specified dataset.
 POST /api/dataset/employee_dataset/record
 Content-Type: application/json
 ```
+
+**Request body:**
 
 ```json
 {
@@ -184,7 +196,7 @@ GET /api/dataset/employee_dataset/query?groupBy=department
 }
 ```
 
-Grouping can be performed using other available fields, such as `age`, by changing the `groupBy` parameter.
+Grouping can be performed using other available fields by changing the `groupBy` parameter.
 
 ### 3. Query API — Sort By
 
@@ -234,7 +246,7 @@ GET /api/dataset/employee_dataset/query?sortBy=age&order=desc
 
 Start the application and open Swagger UI:
 
-[http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
 Use Swagger UI or Postman to send requests and inspect API responses.
 
@@ -242,7 +254,7 @@ Use Swagger UI or Postman to send requests and inspect API responses.
 
 Run the test suite using Maven:
 
-```bash
+```bat
 mvnw.cmd test
 ```
 
