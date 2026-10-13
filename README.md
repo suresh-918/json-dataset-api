@@ -1,129 +1,52 @@
 # JSON Dataset API
 
-A Spring Boot REST API that stores JSON dataset records in a MySQL relational database and supports dynamic **Group By** and **Sort By** operations on stored records.
+A REST API built using Spring Boot that allows users to insert arbitrary JSON records into datasets and query them using dynamic grouping and sorting.
+
+## Live Deployment
+
+- **Live API:** https://json-dataset-api-737i.onrender.com
+- **Swagger UI:** https://json-dataset-api-737i.onrender.com/swagger-ui/index.html
+- **GitHub Repository:** https://github.com/suresh-918/json-dataset-api
+
+## Technology Stack
+
+- Java 17
+- Spring Boot
+- Spring Data JPA
+- Hibernate
+- MySQL
+- Maven
+- Springdoc OpenAPI / Swagger UI
+- Docker
+- Render (application deployment)
+- Aiven MySQL (database hosting)
 
 ## Features
 
 - Insert arbitrary JSON records into a named dataset.
-- Persist JSON data in MySQL.
-- Dynamically group records by any available JSON field.
-- Dynamically sort records by a specified JSON field in ascending or descending order.
-- Validate request parameters and handle errors consistently.
-- Provide structured API responses.
-- API documentation through Swagger UI.
-- Unit tests using JUnit and Mockito.
-
-## Tech Stack
-
-- **Language:** Java 17
-- **Framework:** Spring Boot 3.5.6
-- **Database:** MySQL 8 or compatible
-- **Persistence:** Spring Data JPA, Hibernate
-- **JSON Processing:** Jackson
-- **API Documentation:** Springdoc OpenAPI / Swagger UI
-- **Testing:** JUnit 5, Mockito
-- **Build Tool:** Maven
-
-## Prerequisites
-
-Ensure the following are installed or available:
-
-- Java 17 or later
-- A MySQL database (local or hosted)
-- Maven, or use the included Maven Wrapper
-
-## Database Setup
-
-Create a database in MySQL if it does not already exist:
-
-```sql
-CREATE DATABASE freightfoxdb;
-```
-
-The application uses Hibernate schema generation with `spring.jpa.hibernate.ddl-auto=update`.
-
-### Environment Variables
-
-Configure the following environment variables before starting the application:
-
-| Variable | Description |
-|---|---|
-| `DB_URL` | Complete JDBC URL for the MySQL database |
-| `DB_USERNAME` | MySQL username |
-| `DB_PASSWORD` | MySQL password |
-
-For a local MySQL installation, the JDBC URL can be:
-
-```text
-jdbc:mysql://localhost:3306/freightfoxdb
-```
-
-For a hosted database such as Aiven, use the JDBC URL and connection details provided by your database provider. Ensure SSL is configured as required by the provider.
-
-**Security:** Never commit database passwords or other secrets to GitHub.
-
-## Configuration
-
-The main configuration file is `src/main/resources/application.properties`.
-
-```properties
-spring.application.name=json-dataset-api
-
-spring.datasource.url=${DB_URL}
-spring.datasource.username=${DB_USERNAME}
-spring.datasource.password=${DB_PASSWORD}
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=false
-
-springdoc.swagger-ui.path=/swagger-ui.html
-```
-
-The database connection details are supplied through environment variables rather than being hardcoded in the configuration file.
-
-## Running the Application
-
-Clone the repository and navigate to the project directory:
-
-```bash
-git clone https://github.com/suresh-918/json-dataset-api.git
-cd json-dataset-api
-```
-
-Configure `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD` in your IDE or terminal.
-
-### Windows
-
-```bat
-set DB_URL=jdbc:mysql://localhost:3306/freightfoxdb
-set DB_USERNAME=your_mysql_username
-set DB_PASSWORD=your_mysql_password
-mvnw.cmd spring-boot:run
-```
-
-Replace the example values with your actual database connection details. For a hosted database, use its JDBC URL instead of the localhost URL.
-
-Alternatively, run `JsonDatasetApiApplication` from your IDE after configuring the environment variables.
-
-The application starts on:
-
-```text
-http://localhost:8080
-```
+- Query records from a dataset.
+- Dynamically group records using the `groupBy` parameter.
+- Dynamically sort records using the `sortBy` parameter.
+- Support ascending and descending sorting through the `order` parameter.
+- Interactive API documentation using Swagger UI.
+- Environment-based database configuration.
 
 ## API Endpoints
 
-### 1. Insert Record API
+### 1. Insert a JSON Record
 
-**Endpoint:** `POST /api/dataset/{datasetName}/record`
+**HTTP Method:** `POST`
 
-Inserts a JSON object into the specified dataset.
+**Endpoint:**
+
+```text
+/api/dataset/{datasetName}/record
+```
 
 **Example request:**
 
 ```http
-POST /api/dataset/employee_dataset/record
+POST /api/dataset/employees/record
 Content-Type: application/json
 ```
 
@@ -131,169 +54,141 @@ Content-Type: application/json
 
 ```json
 {
-  "id": 1,
-  "name": "John Doe",
-  "age": 30,
-  "department": "Engineering"
+  "name": "Suresh",
+  "department": "Engineering",
+  "salary": 50000
 }
 ```
 
-**Example response:**
+**Description:**
 
-The following illustrates the expected response structure; the record ID is generated by the application.
+Inserts a JSON record into the specified dataset. The `datasetName` path variable identifies the dataset.
 
-```json
-{
-  "status": 201,
-  "message": "Record added successfully",
-  "data": {
-    "dataset": "employee_dataset",
-    "recordId": 1
-  },
-  "success": true
-}
+The API returns a response containing the result of the insertion.
+
+### 2. Query Dataset Records
+
+**HTTP Method:** `GET`
+
+**Endpoint:**
+
+```text
+/api/dataset/{datasetName}/query
 ```
 
-### 2. Query API — Group By
+**Query parameters:**
 
-**Endpoint:** `GET /api/dataset/{datasetName}/query?groupBy={fieldName}`
-
-Groups records by the specified JSON field.
+| Parameter | Description |
+|---|---|
+| `groupBy` | Field used to group records. |
+| `sortBy` | Field used to sort records. |
+| `order` | Sorting direction, such as `asc` or `desc`, according to the API implementation. |
 
 **Example request:**
 
 ```http
-GET /api/dataset/employee_dataset/query?groupBy=department
+GET /api/dataset/employees/query?groupBy=department&sortBy=salary&order=desc
 ```
 
-**Example response:**
+**Description:**
 
-```json
-{
-  "status": 200,
-  "message": "Dataset queried successfully",
-  "data": {
-    "groupedRecords": {
-      "Engineering": [
-        {
-          "id": 1,
-          "name": "John Doe",
-          "age": 30,
-          "department": "Engineering"
-        }
-      ],
-      "Marketing": [
-        {
-          "id": 2,
-          "name": "Jane Smith",
-          "age": 25,
-          "department": "Marketing"
-        }
-      ]
-    }
-  },
-  "success": true
-}
-```
+Retrieves records from the specified dataset, with optional grouping and sorting based on the supplied query parameters.
 
-Grouping can be performed using other available fields by changing the `groupBy` parameter.
+Refer to Swagger UI for the available request parameters and response structures.
 
-### 3. Query API — Sort By
+## Database Configuration
 
-**Endpoint:** `GET /api/dataset/{datasetName}/query?sortBy={fieldName}&order={asc|desc}`
+The application uses Aiven MySQL as its database.
 
-Sorts records by the specified JSON field.
-
-**Example request — ascending order:**
-
-```http
-GET /api/dataset/employee_dataset/query?sortBy=age&order=asc
-```
-
-**Example request — descending order:**
-
-```http
-GET /api/dataset/employee_dataset/query?sortBy=age&order=desc
-```
-
-**Example response:**
-
-```json
-{
-  "status": 200,
-  "message": "Dataset queried successfully",
-  "data": {
-    "sortedRecords": [
-      {
-        "id": 2,
-        "name": "Jane Smith",
-        "age": 25,
-        "department": "Marketing"
-      },
-      {
-        "id": 1,
-        "name": "John Doe",
-        "age": 30,
-        "department": "Engineering"
-      }
-    ]
-  },
-  "success": true
-}
-```
-
-## API Documentation
-
-Start the application and open Swagger UI:
-
-[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
-
-Use Swagger UI or Postman to send requests and inspect API responses.
-
-## Running Tests
-
-Run the test suite using Maven:
-
-```bat
-mvnw.cmd test
-```
-
-Or run the tests directly from your IDE.
-
-The tests verify the application context and relevant service behavior, including grouping, sorting, and request validation, according to the implemented test cases.
-
-## Project Structure
+**JDBC URL:**
 
 ```text
-src/
-├── main/
-│   ├── java/com/freightfox/jsondataset/
-│   │   ├── controller/
-│   │   ├── dto/
-│   │   ├── entity/
-│   │   ├── exception/
-│   │   ├── repository/
-│   │   ├── service/
-│   │   │   └── impl/
-│   │   └── JsonDatasetApiApplication.java
-│   └── resources/
-│       └── application.properties
-└── test/
-    └── java/com/freightfox/jsondataset/
+jdbc:mysql://freightfox-mysql-nagasureshchakali-6b27.f.aivencloud.com:13853/freightfoxdb?sslMode=REQUIRED
 ```
 
-## Design Notes
+Database configuration is provided through environment variables:
 
-- Controllers expose REST endpoints.
-- Service interfaces and implementations contain business logic.
-- Spring Data JPA repositories handle persistence.
-- DTOs define API response structures.
-- Centralized exception handling provides consistent error responses.
+| Environment Variable | Description |
+|---|---|
+| `DB_URL` | JDBC connection URL for the Aiven MySQL database. |
+| `DB_USERNAME` | Aiven database username. |
+| `DB_PASSWORD` | Aiven database password. |
 
-## Assignment Objective
+The database URL above is configured for an SSL connection.
 
-This project implements the JSON record insertion, dynamic grouping, and dynamic sorting operations described in the Backend Assignment — JSON Group By and Sort By Operators.
+**Security note:** Database credentials should be configured through environment variables and must not be committed to the Git repository.
 
-## License
+## Local Setup
 
-This project was developed as a backend assignment.
+### Prerequisites
+
+- Java 17
+- Maven
+- Access to a MySQL database
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/suresh-918/json-dataset-api.git
+cd json-dataset-api
+```
+
+### 2. Configure environment variables
+
+Configure the following environment variables in your terminal or IDE run configuration:
+
+```text
+DB_URL=jdbc:mysql://freightfox-mysql-nagasureshchakali-6b27.f.aivencloud.com:13853/freightfoxdb?sslMode=REQUIRED
+DB_USERNAME=<your-aiven-username>
+DB_PASSWORD=<your-aiven-password>
+```
+
+Replace the username and password placeholders with your own credentials. Do not commit actual credentials to GitHub.
+
+### 3. Build the application
+
+```bash
+mvn clean package
+```
+
+### 4. Run the application
+
+Use the generated JAR file from the `target` directory:
+
+```bash
+java -jar target/<generated-jar-name>.jar
+```
+
+Alternatively, run the application from your IDE.
+
+### 5. Open Swagger UI
+
+After the application starts, open:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
+
+## Deployment
+
+The application is deployed on Render using Docker, with Aiven MySQL providing the database.
+
+The deployment uses environment variables for database credentials and connection settings.
+
+- **Production API:** https://json-dataset-api-737i.onrender.com
+- **Production Swagger UI:** https://json-dataset-api-737i.onrender.com/swagger-ui/index.html
+
+## Testing
+
+Use Swagger UI to test the API endpoints:
+
+1. Insert JSON records into a dataset.
+2. Query the dataset without optional parameters.
+3. Query records using `groupBy`.
+4. Query records using `sortBy`.
+5. Test ascending and descending sorting.
+6. Verify that the API returns the expected responses.
+
+## Project Repository
+
+GitHub: https://github.com/suresh-918/json-dataset-api
